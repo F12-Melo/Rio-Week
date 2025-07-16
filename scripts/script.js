@@ -14,7 +14,7 @@ const locais = [
     lng: -43.234250,
     nome: "Sesc Tijuca",
     descricao: "Centro cultural e de lazer na Tijuca com atividades esportivas, teatro e biblioteca.",
-    imagens: ["https://www.sesc-rio.com.br/uploads/estrutura/sesc-tijuca.jpg"]
+    imagens: ["https://www.sescrio.org.br/wp-content/uploads/2018/09/A%C3%A9reo.jpg"]
   },
   {
     lat: -22.9122,
@@ -82,7 +82,7 @@ const locais = [
 ];
 
 
-const personagemLatLng = L.latLng(-22.947, -43.245);
+let personagemLatLng = L.latLng(-22.947, -43.245);
 
 const personagemIcon = L.icon({
   iconUrl: '/assets/anderson.png',
@@ -198,77 +198,3 @@ function moveKnob(e) {
   animationFrame = requestAnimationFrame(loop);
 }
 
-// Variáveis para movimentação automática por clique
-let destino = null;
-let caminho = null;
-let moverInterval = null;
-const velocidade = 0.00015; // ajuste a velocidade da movimentação automática
-
-// Função para desenhar caminho pontilhado entre dois pontos
-function desenharCaminho(inicio, fim) {
-  if (caminho) {
-    map.removeLayer(caminho);
-  }
-  caminho = L.polyline([inicio, fim], {
-    color: 'yellow',
-    weight: 3,
-    dashArray: '10, 10'
-  }).addTo(map);
-}
-
-// Função que move o personagem automaticamente para o destino
-function moverParaDestino() {
-  if (!destino) return;
-
-  const lat1 = personagemLatLng.lat;
-  const lng1 = personagemLatLng.lng;
-  const lat2 = destino.lat;
-  const lng2 = destino.lng;
-
-  const distancia = personagemLatLng.distanceTo(destino);
-
-  if (distancia < 2) { // Chegou no destino
-    clearInterval(moverInterval);
-    moverInterval = null;
-    destino = null;
-    if (caminho) {
-      map.removeLayer(caminho);
-      caminho = null;
-    }
-    verificarProximidade();
-    return;
-  }
-
-  // Vetor unitário direção
-  const vetorLat = (lat2 - lat1) / distancia;
-  const vetorLng = (lng2 - lng1) / distancia;
-
-  // Atualiza posição do personagem (passo)
-  personagemLatLng = L.latLng(
-    lat1 + vetorLat * velocidade * 1000,
-    lng1 + vetorLng * velocidade * 1000
-  );
-  personagem.setLatLng(personagemLatLng);
-  map.setView(personagemLatLng);
-
-  // Atualiza a linha do caminho para mostrar trajeto restante
-  desenharCaminho(personagemLatLng, destino);
-  verificarProximidade();
-}
-
-// Evento para movimentação ao clicar no mapa
-map.on('click', e => {
-  destino = e.latlng;
-  if (moverInterval) clearInterval(moverInterval);
-  moverInterval = setInterval(moverParaDestino, 16); // ~60fps
-});
-
-// Evento para movimentação e mostrar info ao clicar nos pins
-pontos.forEach(marker => {
-  marker.on('click', () => {
-    destino = marker.getLatLng();
-    if (moverInterval) clearInterval(moverInterval);
-    moverInterval = setInterval(moverParaDestino, 16);
-    mostrarInfo(marker.dados);
-  });
-});
